@@ -11,10 +11,10 @@ const program = (): GrantProgram => {
 };
 test('only an assessment of the current profile and source exposes a current grade/score',()=>{
  const p=program();const current=grantReviewPresentation(p,'profile-v1');assert.equal(current.grade,'S');assert.equal(current.score,95);assert.equal(current.previous,false);assert.equal(current.statusLabel,null);
- for(const [row,profile] of [[p,'profile-v2'],[{...p,summary:'Newly imported contents'},'profile-v1'],[{...p,assessment:{...p.assessment!,version:REVIEW_VERSION-1}},'profile-v1']] as const){const state=grantReviewPresentation(row,profile);assert.equal(state.grade,null);assert.equal(state.score,null);assert.equal(state.previous,true);assert.equal(state.statusLabel,'재심사 필요');assert.equal(row.why,'Previous rationale');}
+ for(const [row,profile] of [[p,'profile-v2'],[{...p,summary:'Newly imported contents'},'profile-v1'],[{...p,assessment:{...p.assessment!,version:REVIEW_VERSION-1}},'profile-v1']] as const){const state=grantReviewPresentation(row,profile);assert.equal(state.grade,null);assert.equal(state.score,null);assert.equal(state.previous,true);assert.equal(state.statusLabel,'Review again');assert.equal(row.why,'Previous rationale');}
 });
 test('a failed rerun is visible and never revives the previous successful grade',()=>{
- const p=program();p.assessment={...p.assessment!,status:'failed',error:'Test provider failure'};const state=grantReviewPresentation(p,'profile-v1');assert.equal(state.failed,true);assert.equal(state.statusLabel,'심사 실패');assert.equal(state.grade,null);assert.equal(state.score,null);assert.equal(state.previous,true);assert.equal(p.grade,'S');assert.equal(p.eligibility[0].note,'Previous note');
+ const p=program();p.assessment={...p.assessment!,status:'failed',error:'Test provider failure'};const state=grantReviewPresentation(p,'profile-v1');assert.equal(state.failed,true);assert.equal(state.statusLabel,'Review failed');assert.equal(state.grade,null);assert.equal(state.score,null);assert.equal(state.previous,true);assert.equal(p.grade,'S');assert.equal(p.eligibility[0].note,'Previous note');
 });
 test('current grade filters and rankings exclude stale high grades',()=>{
  const stale=program();const fresh={...program(),id:'fresh',grade:'B' as const,score:60};const programs=[stale,fresh];stale.assessment={...stale.assessment!,profileUpdatedAt:'previous-profile'};
@@ -23,5 +23,5 @@ test('current grade filters and rankings exclude stale high grades',()=>{
  assert(grantReviewPresentation(fresh,'profile-v1').rank<grantReviewPresentation(stale,'profile-v1').rank);
 });
 test('never-reviewed records are distinct from preserved previous evaluations',()=>{
- const p={...program(),grade:null,score:null,assessment:null,why:'',eligibility:[],matchedTags:[],matchedAt:null};const state=grantReviewPresentation(p,'profile-v1');assert.equal(state.statusLabel,'미심사');assert.equal(state.previous,false);assert.equal(state.grade,null);assert.equal(state.score,null);
+ const p={...program(),grade:null,score:null,assessment:null,why:'',eligibility:[],matchedTags:[],matchedAt:null};const state=grantReviewPresentation(p,'profile-v1');assert.equal(state.statusLabel,'Not reviewed');assert.equal(state.previous,false);assert.equal(state.grade,null);assert.equal(state.score,null);
 });

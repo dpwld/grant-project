@@ -1,17 +1,17 @@
 {
-  "description": "가져올 파일은 아래 필드를 가진 실제 공고 객체의 배열입니다. 이 파일 자체는 데이터가 아니라 필드 명세입니다.",
+  "description": "Import a JSON array of actual announcement objects with the fields below. This file is a field specification, not announcement data.",
   "limits": {"records":500,"bytes":1000000},
   "fields": {
     "source": "bizinfo | kstartup | manual",
-    "sourceId": "공고 출처의 고유 ID (빈 문자열 불가)",
-    "title": "공고 제목 (빈 문자열 불가)",
-    "url": "원문 http(s) URL 또는 빈 문자열",
-    "summary": "실제 공고 요약",
-    "supportTypes": "지원 유형 문자열 배열",
-    "targets": "지원 대상 문자열 배열",
-    "region": "대상 지역",
-    "amountText": "공고에 표기된 지원 금액",
-    "applyStart": "YYYY-MM-DD 또는 null",
-    "applyEnd": "YYYY-MM-DD 또는 null"
+    "sourceId": "Unique ID from the announcement source (non-empty)",
+    "title": "Announcement title (non-empty)",
+    "url": "Original http(s) URL or an empty string",
+    "summary": "Actual announcement summary",
+    "supportTypes": "Array of support-type strings",
+    "targets": "Array of eligible-applicant strings",
+    "region": "Target region",
+    "amountText": "Support amount as stated in the announcement",
+    "applyStart": "YYYY-MM-DD or null",
+    "applyEnd": "YYYY-MM-DD or null"
   }
 }

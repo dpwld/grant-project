@@ -6,31 +6,31 @@ import type { GrantGrade, GrantProfile, GrantProgram } from "@/lib/data/grants";
 export const GRADE_ORDER: GrantGrade[] = ["S", "A", "B", "C", "D"];
 
 export const GRADE_COLOR: Record<GrantGrade, string> = {
-  S: "#18181b",
-  A: "#3f3f46",
-  B: "#52525b",
-  C: "#71717a",
-  D: "#a1a1aa",
+  S: "#047857",
+  A: "#0369a1",
+  B: "#4f46e5",
+  C: "#a16207",
+  D: "#64748b",
 };
 
 export const GRADE_LABEL: Record<GrantGrade, string> = {
-  S: "즉시 검토",
-  A: "우선 검토",
-  B: "검토 후보",
-  C: "관련성 낮음",
-  D: "무관",
+  S: "Review now",
+  A: "Priority review",
+  B: "Consider",
+  C: "Low relevance",
+  D: "Not relevant",
 };
 
 export const SOURCE_LABEL: Record<GrantProgram["source"], string> = {
-  bizinfo: "기업마당",
+  bizinfo: "Bizinfo",
   kstartup: "K-Startup",
-  manual: "수동 등록",
+  manual: "Manual import",
 };
 
 export const ELIGIBILITY_LABEL = {
-  meets: "충족",
-  unclear: "원문 확인",
-  fails: "미충족",
+  meets: "Meets",
+  unclear: "Check source",
+  fails: "Does not meet",
 } as const;
 
 function todayIso(): string {
@@ -50,26 +50,26 @@ export function isClosingSoon(p: GrantProgram): boolean {
 
 /* 프로필 완성도 — 필수/추천/선택 3단. 필드 존재 여부만 본다. */
 const REQUIRED_FIELDS: { key: keyof GrantProfile; label: string }[] = [
-  { key: "companyName", label: "회사명" },
-  { key: "entityType", label: "기업 형태" },
-  { key: "foundedOn", label: "설립일(업력)" },
-  { key: "industry", label: "업종" },
-  { key: "regionSi", label: "소재지(시)" },
-  { key: "businessSummary", label: "사업 요약" },
+  { key: "companyName", label: "Company name" },
+  { key: "entityType", label: "Company type" },
+  { key: "foundedOn", label: "Founding date" },
+  { key: "industry", label: "Industry" },
+  { key: "regionSi", label: "City / province" },
+  { key: "businessSummary", label: "Business summary" },
 ];
 
 const RECOMMENDED_FIELDS: { key: keyof GrantProfile; label: string }[] = [
-  { key: "keywords", label: "매칭 키워드" },
-  { key: "certifications", label: "보유 인증" },
-  { key: "employeeCount", label: "직원 수" },
-  { key: "coreTech", label: "핵심 기술" },
-  { key: "excludeKeywords", label: "제외 키워드" },
+  { key: "keywords", label: "Matching keywords" },
+  { key: "certifications", label: "Certifications" },
+  { key: "employeeCount", label: "Employee count" },
+  { key: "coreTech", label: "Core technology" },
+  { key: "excludeKeywords", label: "Excluded keywords" },
 ];
 
 const OPTIONAL_FIELDS: { key: keyof GrantProfile; label: string }[] = [
-  { key: "revenueBand", label: "매출 구간" },
-  { key: "achievements", label: "주요 실적" },
-  { key: "subIndustry", label: "세부 업종" },
+  { key: "revenueBand", label: "Revenue range" },
+  { key: "achievements", label: "Achievements" },
+  { key: "subIndustry", label: "Industry specialization" },
 ];
 
 function filled(profile: GrantProfile, key: keyof GrantProfile): boolean {
@@ -94,9 +94,9 @@ export interface Completeness {
 
 export function profileCompleteness(profile: GrantProfile | null): Completeness {
   const specs: { label: string; fields: typeof REQUIRED_FIELDS }[] = [
-    { label: "필수", fields: REQUIRED_FIELDS },
-    { label: "추천", fields: RECOMMENDED_FIELDS },
-    { label: "선택", fields: OPTIONAL_FIELDS },
+    { label: "Required", fields: REQUIRED_FIELDS },
+    { label: "Recommended", fields: RECOMMENDED_FIELDS },
+    { label: "Optional", fields: OPTIONAL_FIELDS },
   ];
   const tiers = specs.map(({ label, fields }) => {
     const rows = fields.map((f) => ({ ...f, done: profile ? filled(profile, f.key) : false }));

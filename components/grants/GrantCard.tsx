@@ -60,8 +60,8 @@ export function GrantCard({ program: p, profileUpdatedAt, onOpen, onToggleStar, 
         ) : (
           <Tag size="sm">{review.statusLabel}</Tag>
         )}
-        {review.failed && review.previous && <Tag size="sm">재심사 필요</Tag>}
-        {review.previous && p.grade && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>이전 평가 {p.grade}{p.score != null ? ` · ${p.score}점` : ""}</span>}
+        {review.failed && review.previous && <Tag size="sm">Review again</Tag>}
+        {review.previous && p.grade && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Previous review {p.grade}{p.score != null ? ` · ${p.score} pts` : ""}</span>}
         <Tag size="sm">{SOURCE_LABEL[p.source]}</Tag>
         <span style={{ flex: 1 }} />
         {d && (
@@ -72,7 +72,7 @@ export function GrantCard({ program: p, profileUpdatedAt, onOpen, onToggleStar, 
               color: closing || d.overdue ? "var(--red-500, #ef4444)" : "var(--text-muted)",
             }}
           >
-            {d.overdue ? "마감" : d.label}
+            {d.overdue ? "Closed" : d.label}
           </span>
         )}
       </div>
@@ -81,7 +81,7 @@ export function GrantCard({ program: p, profileUpdatedAt, onOpen, onToggleStar, 
 
       {(p.matchedTags.length > 0 || p.supportTypes.length > 0) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {review.previous && p.matchedTags.length > 0 && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>이전 평가 키워드</span>}
+          {review.previous && p.matchedTags.length > 0 && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Previous matching keywords</span>}
           {p.matchedTags.slice(0, 3).map((t) => (
             <Tag key={t} size="sm" active={!review.stale}>
               {t}
@@ -107,22 +107,22 @@ export function GrantCard({ program: p, profileUpdatedAt, onOpen, onToggleStar, 
             overflow: "hidden",
           }}
         >
-          {p.why ? `${review.stale ? "이전 평가 · " : ""}${p.why}` : p.summary}
+          {p.why ? `${review.stale ? "Previous review · " : ""}${p.why}` : p.summary}
         </div>
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }} onClick={(e) => e.stopPropagation()}>
-        <IconBtn label={p.starred ? "별표 해제" : "별표"} active={p.starred} onClick={onToggleStar}>
+        <IconBtn label={p.starred ? "Remove star" : "Star"} active={p.starred} onClick={onToggleStar}>
           <Star size={15} fill={p.starred ? "currentColor" : "none"} />
         </IconBtn>
-        <IconBtn label="도움됨" active={p.feedback === "up"} onClick={() => onFeedback("up")}>
+        <IconBtn label="Helpful" active={p.feedback === "up"} onClick={() => onFeedback("up")}>
           <ThumbsUp size={15} />
         </IconBtn>
-        <IconBtn label="도움 안 됨" active={p.feedback === "down"} onClick={() => onFeedback("down")}>
+        <IconBtn label="Not helpful" active={p.feedback === "down"} onClick={() => onFeedback("down")}>
           <ThumbsDown size={15} />
         </IconBtn>
         <span style={{ flex: 1 }} />
-        <IconBtn label="추천에서 빼기" onClick={onDismiss}>
+        <IconBtn label="Archive recommendation" onClick={onDismiss}>
           <X size={15} />
         </IconBtn>
       </div>

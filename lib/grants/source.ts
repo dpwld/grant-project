@@ -22,10 +22,10 @@ export function plainText(html: string): string {
 export function extractAnnouncement(html: string, source: string): string {
   const marker = source === "bizinfo" ? /<div\s+class=["']view_cont["'][^>]*>/i : /<div\s+id=["']contentViewHtml["'][^>]*>/i;
   const start = html.search(marker);
-  if (start < 0) throw new Error("공고 본문을 찾지 못했습니다");
+  if (start < 0) throw new Error("Could not locate the announcement body");
   const body = html.slice(start).split(/<!--\s*(?:s:\s*)?footer\s*-->|<div\s+class=["']footer/)[0];
   const text = plainText(body).split("이 공고를 열람한 사용자가 함께 본 공고")[0].trim();
-  if (text.length < 100 || !/지원|신청|접수/.test(text)) throw new Error("공고 본문이 비어 있습니다");
+  if (text.length < 100 || !/지원|신청|접수/.test(text)) throw new Error("The announcement body is empty");
   return text;
 }
 
@@ -35,13 +35,13 @@ export async function readOriginal(p: { source: string; source_id: string }): Pr
   if (p.source === "bizinfo" && /^PBLN_\d+$/.test(p.source_id)) url = `https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=${p.source_id}`;
   if (p.source === "kstartup" && /^\d+$/.test(p.source_id)) url = `https://www.k-startup.go.kr/web/contents/bizpbanc-ongoing.do?schM=view&pbancSn=${p.source_id}`;
   const base = { sourceUrl: url, text: "", originalChars: 0, truncated: false, attachmentsReviewed: false as const };
-  if (!url) return { ...base, sourceStatus: "summary_only", sourceError: "원문 자동 조회를 지원하지 않는 출처입니다" };
+  if (!url) return { ...base, sourceStatus: "summary_only", sourceError: "Automatic source retrieval is not supported for this source" };
   try {
     async function page(address: string) {
       const response = await fetch(address, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(8_000) });
-      if (!response.ok) throw new Error(`원문 조회 HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`Source request HTTP ${response.status}`);
       const html = await response.text();
-      if (html.length > 2_000_000) throw new Error("원문 페이지 용량 초과");
+      if (html.length > 2_000_000) throw new Error("The source page exceeded the size limit");
       return html;
     }
     let html = await page(url);
@@ -55,6 +55,6 @@ export async function readOriginal(p: { source: string; source_id: string }): Pr
     const text = extractAnnouncement(html, p.source);
     return { ...base, sourceUrl: url, sourceStatus: "original", text: text.slice(0, 18_000), originalChars: text.length, truncated: text.length > 18_000 };
   } catch (err) {
-    return { ...base, sourceStatus: "summary_only", sourceError: err instanceof Error ? err.message.slice(0, 100) : "원문 조회 실패" };
+    return { ...base, sourceStatus: "summary_only", sourceError: err instanceof Error ? err.message.slice(0, 100) : "Could not retrieve the source" };
   }
 }

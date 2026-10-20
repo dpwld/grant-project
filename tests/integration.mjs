@@ -9,12 +9,30 @@ async function req(path,method='GET',value,identity=user,extra={}){
  return {status:res.status,data:await res.json()};
 }
 if(process.argv.includes('--verify-restart')){
- const state=await req('/api/grants');assert.equal(state.data.profile.companyName,'Integration verification');assert.equal(state.data.programs[0].starred,true);assert.equal(state.data.programs[0].feedback,null);console.log('PASS persistence after worker restart');process.exit(0);
+ const state=await req('/api/grants');assert.equal(state.data.profile.companyName,'Integration verification');assert.equal(state.data.programs[0].starred,true);assert.equal(state.data.programs[0].feedback,null);assert.equal(state.data.profile.businessSummary,'Edited fictional company summary');console.log('PASS profile edits and program persistence after worker restart');process.exit(0);
 }
 assert.equal((await req('/api/grants','GET',undefined,null)).status,401);
 assert.equal((await req('/api/grants/profile','PUT',{},user,{Origin:'https://other.invalid'})).status,403);
 const profile={companyName:'Integration verification',entityType:'',foundedOn:null,industry:'',subIndustry:'',regionSi:'',regionGu:'',businessSummary:'',employeeCount:0,revenueBand:'',certifications:[],keywords:[],excludeKeywords:[],achievements:'',coreTech:'',matchFocus:''};
+const initial=await req('/api/grants');assert.equal(initial.data.profile,null);assert.equal(initial.data.programs.length,0);
+assert.equal((await req('/api/grants/match','POST',{mode:'all'})).status,409);
+assert.equal((await req('/api/grants/profile','PUT',{...profile,completeSetup:true})).status,400);
+assert.equal((await req('/api/grants')).data.profile,null);
 assert.equal((await req('/api/grants/profile','PUT',profile)).status,200);
+const draftReload=await req('/api/grants');assert.equal(draftReload.data.profile.companyName,'Integration verification');assert.equal(draftReload.data.profile.industry,'');
+assert.equal((await req('/api/grants/match','POST',{mode:'all'})).status,409);
+assert.equal((await req('/api/grants/profile','PUT',{...profile,foundedOn:'2999-01-01'})).status,400);
+assert.equal((await req('/api/grants')).data.profile.foundedOn,null);
+const complete={...profile,entityType:'Corporation',foundedOn:'2020-01-01',industry:'Software',regionSi:'Seoul',businessSummary:'Fictional software company',completeSetup:true};
+assert.equal((await req('/api/grants/profile','PUT',complete)).status,200);
+const saved=(await req('/api/grants')).data.profile;assert.equal(saved.industry,'Software');assert.equal(saved.completeSetup,undefined);
+assert.equal((await req('/api/grants/profile','PUT',{...complete,industry:'  '})).status,400);
+assert.equal((await req('/api/grants')).data.profile.industry,'Software');
+const edit=await req('/api/grants/profile','PUT',{...complete,businessSummary:'Edited fictional company summary'});assert.equal(edit.status,200);
+assert.equal((await req('/api/grants')).data.profile.businessSummary,'Edited fictional company summary');
+assert.equal((await req('/api/grants','GET',undefined,user+'-other')).data.profile,null);
+assert.equal((await req('/api/grants/profile','PUT',{...complete,companyName:'Other owner'},user+'-other')).status,200);
+assert.equal((await req('/api/grants')).data.profile.companyName,'Integration verification');
 assert.equal((await req('/api/grants/profile','PUT',{...profile,employeeCount:-3})).status,400);
 let state=await req('/api/grants');assert.equal(state.data.profile.employeeCount,0);
 const record={source:'manual',sourceId:'qa-only',title:'Integration record',url:'https://example.invalid/',summary:'Disposable integration fixture',supportTypes:[],targets:[],region:'',amountText:'',applyStart:null,applyEnd:null};

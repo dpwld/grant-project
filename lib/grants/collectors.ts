@@ -43,26 +43,24 @@ function stripTags(v: unknown): string {
   return plainText(text(v));
 }
 
-/* 인증 오류 시 두 API 모두 JSON 대신 XML/텍스트를 돌려준다 —
-   SERVICE_KEY_IS_NOT_REGISTERED 같은 원인이 토스트까지 전달되게 본문을 던진다. */
+/* Providers can return XML or plain-text authentication errors instead of JSON. */
 async function fetchJson(url: string, label: string): Promise<unknown> {
   const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
   const body = await res.text();
-  if (!res.ok) throw new Error(`${label} http ${res.status}: ${body.slice(0, 100)}`);
+  if (!res.ok) throw new Error(`${label} request failed (HTTP ${res.status}). Check API access and configuration.`);
   let json: unknown;
   try {
     json = JSON.parse(body);
   } catch {
-    throw new Error(`${label} non-json: ${body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 100)}`);
+    throw new Error(`${label} returned an unsupported response. Check the API key and service access.`);
   }
-  // data.go.kr 게이트웨이는 인증 오류를 JSON 봉투로도 돌려준다 — 조용한 0건이
-  // 되지 않게 오류 메시지를 그대로 던진다.
+  // Reject provider errors inside JSON envelopes instead of reporting an empty collection.
   const header = (json as { response?: { header?: { resultCode?: string; resultMsg?: string } } })?.response?.header;
   if (header?.resultMsg && header.resultCode !== "00") {
-    throw new Error(`${label} ${header.resultCode ?? ""} ${header.resultMsg}`.trim());
+    throw new Error(`${label} rejected the request (code: ${header.resultCode ?? "unknown"}). Check the API key and service access.`);
   }
   const flatMsg = (json as { resultMsg?: string; errMsg?: string })?.resultMsg ?? (json as { errMsg?: string })?.errMsg;
-  if (flatMsg) throw new Error(`${label} ${flatMsg}`);
+  if (flatMsg) throw new Error(`${label} rejected the request. Check the API key and service access.`);
   return json;
 }
 
@@ -73,7 +71,7 @@ export async function fetchBizinfo(key: string): Promise<IngestRow[]> {
     const url = `https://www.bizinfo.go.kr/uss/rss/bizinfoApi.do?crtfcKey=${encodeURIComponent(key)}&dataType=json&searchCnt=0&pageUnit=100&pageIndex=${page}`;
     const json = (await fetchJson(url, "bizinfo")) as Record<string, unknown> & { jsonArray?: unknown; item?: unknown };
     const items = Array.isArray(json?.jsonArray) ? json.jsonArray : Array.isArray(json?.item) ? json.item : Array.isArray(json) ? json : null;
-    if (!items) throw new Error("기업마당 공고 목록 형식을 확인할 수 없습니다");
+    if (!items) throw new Error("The Bizinfo announcement list format was not recognized");
     return items;
   }, item => text(item.pblancId));
   return items
@@ -112,7 +110,7 @@ export async function fetchKstartup(key: string): Promise<IngestRow[]> {
     const json = (await fetchJson(url, "kstartup")) as Record<string, unknown> & { data?: unknown };
     const outer = json?.data;
     const items = Array.isArray(outer) ? outer : Array.isArray((outer as Record<string, unknown> | undefined)?.data) ? (outer as Record<string, unknown>).data as Record<string, unknown>[] : null;
-    if (!items) throw new Error("K-Startup 공고 목록 형식을 확인할 수 없습니다");
+    if (!items) throw new Error("The K-Startup announcement list format was not recognized");
     return items;
   }, item => scalar(item.pbanc_sn ?? item.pbancSn));
   const rows = items
@@ -136,9 +134,9 @@ export async function fetchKstartup(key: string): Promise<IngestRow[]> {
       };
     })
     .filter((r): r is IngestRow => r !== null);
-  // 수신은 됐는데 매핑에서 전부 걸러졌다면 필드명이 다른 것 — 첫 항목을 노출해 진단.
+  // Nonempty responses that cannot be mapped are not a successful empty collection.
   if (items.length > 0 && rows.length === 0) {
-    throw new Error(`kstartup ${items.length}건 수신·매핑 0건: 첫 항목: ${JSON.stringify(items[0]).slice(0, 140)}`);
+    throw new Error(`K-Startup returned ${items.length} records, but none matched the supported announcement fields.`);
   }
   return rows;
 }

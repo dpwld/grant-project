@@ -8,7 +8,7 @@ const mode=process.argv[2];
 if(!['seed','cleanup'].includes(mode))throw new Error('Use: node --experimental-strip-types scripts/readme-example.mjs seed|cleanup');
 const base='http://127.0.0.1:4311';
 const manifest='.wrangler/readme-example-grants.json';
-const profileName='루미노랩 — 예시 기업';
+const profileName='Luminolab — Example Company';
 const owner='local_seedy';
 const prefix='readme-example-';
 async function request(path,method='GET',data){
@@ -45,27 +45,27 @@ mkdirSync('.wrangler',{recursive:true});
 const now=new Date();
 const date=offset=>new Date(now.getTime()+offset*86400000).toISOString().slice(0,10);
 const profile=await request('/api/grants/profile','PUT',{
-  companyName:profileName,entityType:'법인 (주식회사)',foundedOn:date(-700),
-  industry:'소프트웨어 개발',subIndustry:'업무 자동화',regionSi:'서울',regionGu:'성동구',
-  businessSummary:'소규모 조직을 위한 데이터 연결과 업무 자동화 도구를 개발하는 가상 기업입니다.',
-  employeeCount:8,revenueBand:'10억 미만',certifications:['벤처기업인증 (예시)'],
-  keywords:['AI','SaaS','업무 자동화'],excludeKeywords:['제조 설비'],achievements:'예시 서비스 출시',
-  coreTech:'문서 분석, 데이터 연결, 워크플로 자동화',matchFocus:'사업화·기술개발·해외 진출을 위한 지원',
+  companyName:profileName,entityType:'Corporation',foundedOn:date(-700),
+  industry:'Software development',subIndustry:'Workflow automation',regionSi:'Seoul',regionGu:'Seongdong-gu',
+  businessSummary:'A fictional company building data connections and workflow automation tools for small organizations.',
+  employeeCount:8,revenueBand:'Under KRW 1 billion',certifications:['Venture certification (example)'],
+  keywords:['AI','SaaS','Workflow automation'],excludeKeywords:['Manufacturing equipment'],achievements:'Example product launch',
+  coreTech:'Document analysis, data connections, workflow automation',matchFocus:'Support for commercialization, technology development, and international expansion',completeSetup:true,
 });
 const rows=[
- ['초기 기술기업 사업화 패키지',7,'최대 8천만원','사업화','S',94,'업무 자동화 제품의 고객 검증과 초기 판매 준비에 맞는 예시입니다.'],
- ['AI 서비스 실증 프로젝트',14,'최대 1억 2천만원','R&D','A',89,'문서 분석 기술을 실제 업무에 적용하는 실증 과정을 가정했습니다.'],
- ['글로벌 SaaS 시장 검증',21,'최대 5천만원','해외 진출','A',86,'해외 고객 인터뷰와 현지화 준비에 활용하는 가상 프로그램입니다.'],
- ['디지털 전환 협업 바우처',5,'최대 3천만원','바우처','B',77,'협업 기관 확보 여부를 추가 확인하는 예시입니다.'],
- ['기술사업화 멘토링',28,'전문가 멘토링','컨설팅','B',72,'제품 가격과 영업 전략 검토에 도움이 되는 가상 프로그램입니다.'],
- ['초기기업 클라우드 이용 지원',10,'이용료 일부 지원','인프라','B',70,'클라우드 비용 지원 항목을 검토하는 예시입니다.'],
- ['지식재산 출원 지원',35,'출원비 일부 지원','특허','C',58,'현재 사업 우선순위와의 관련성이 낮은 예시입니다.'],
- ['지역 제품 홍보 프로그램',18,'홍보 콘텐츠 제작','마케팅','C',52,'참여 지역과 모집 대상을 추가 확인해야 하는 가상 공고입니다.'],
+ ['Early Technology Commercialization',7,'Up to KRW 80 million','Commercialization','S',94,'An illustrative fit for customer validation and early sales preparation for a workflow automation product.'],
+ ['AI Service Pilot Program',14,'Up to KRW 120 million','R&D','A',89,'This fictional pilot applies document analysis technology to real business workflows.'],
+ ['Global SaaS Market Validation',21,'Up to KRW 50 million','International expansion','A',86,'A fictional program for overseas customer interviews and localization preparation.'],
+ ['Digital Transformation Voucher',5,'Up to KRW 30 million','Voucher','B',77,'This example requires additional confirmation of an implementation partner.'],
+ ['Technology Commercialization Mentoring',28,'Expert mentoring','Consulting','B',72,'A fictional program for reviewing product pricing and sales strategy.'],
+ ['Startup Cloud Support',10,'Partial cloud service costs','Infrastructure','B',70,'An example of assessing cloud cost support for a young company.'],
+ ['Intellectual Property Filing Support',35,'Partial filing costs','Patents','C',58,'An illustrative program with limited relevance to current business priorities.'],
+ ['Regional Product Promotion',18,'Promotional content production','Marketing','C',52,'A fictional announcement requiring further checks of location and applicant eligibility.'],
 ];
 const imports=rows.map(([title,days,amountText,type],index)=>({
-  source:'manual',sourceId:prefix+String(index+1).padStart(2,'0'),title:title+' (예시)',url:'',
-  summary:'README 화면 설명을 위한 가상 지원사업입니다. 실제 모집 공고가 아닙니다.',
-  supportTypes:[type],targets:['기술 창업기업'],region:'전국',amountText,applyStart:date(-14),applyEnd:date(days),
+  source:'manual',sourceId:prefix+String(index+1).padStart(2,'0'),title:title+' (example)',url:'',
+  summary:'A fictional grant program for README screenshots. This is not an actual announcement.',
+  supportTypes:[type],targets:['Technology startups'],region:'Nationwide',amountText,applyStart:date(-14),applyEnd:date(days),
 }));
 const ids=imports.map(row=>'manual:'+row.sourceId);
 writeFileSync(manifest,JSON.stringify({owner,profileName,ids},null,2));
@@ -75,10 +75,10 @@ sql(state.programs.map(program=>{
   const index=ids.indexOf(program.id);if(index<0)throw new Error('Unexpected local record.');
   const [, , , , grade,score,why]=rows[index];
   const value={...program,grade,score,why,matchedAt:now.toISOString(),starred:index<2,
-    matchedTags:['예시 데이터',...(index<3?['AI','사업화']:['검토 후보'])],
-    eligibility:[{requirement:'신청 대상과 사업 분야',status:'meets',note:'가상 기업·가상 공고의 화면 예시입니다.'}],
+    matchedTags:['Example data',...(index<3?['AI','Commercialization']:['Consider'])],
+    eligibility:[{requirement:'Applicant type and business area',status:'meets',note:'This screen uses a fictional company and announcement.'}],
     assessment:{version:REVIEW_VERSION,status:'complete',reviewedAt:now.toISOString(),profileUpdatedAt:profile.updatedAt,
-      inputKey:grantInputKey(program),sourceStatus:'summary_only',sourceUrl:'',sourceError:'실제 AI 심사 결과가 아닌 README 예시입니다.',originalChars:0,truncated:false,attachmentsReviewed:false},
+      inputKey:grantInputKey(program),sourceStatus:'summary_only',sourceUrl:'',sourceError:'Illustrative README example, not an actual AI review result.',originalChars:0,truncated:false,attachmentsReviewed:false},
   };
   return `UPDATE grant_programs SET data=${quote(JSON.stringify(value))} WHERE owner=${quote(owner)} AND id=${quote(program.id)}`;
 }));

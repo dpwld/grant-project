@@ -1,4 +1,4 @@
-export const REVIEW_VERSION = 2;
+export const REVIEW_VERSION = 3;
 
 export interface GrantAssessment {
   version: number;

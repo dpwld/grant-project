@@ -79,10 +79,10 @@ export interface GrantsData {
 
 async function request<T>(path:string, method="GET", body?:unknown):Promise<T>{
  const response=await fetch(path,{method,headers:body===undefined?undefined:{"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
- const value=await response.json() as T & {guidance?:string;error?:string}; if(!response.ok) throw new Error(value.guidance??value.error??"요청 실패"); return value;
+ const value=await response.json() as T & {guidance?:string;error?:string}; if(!response.ok) throw new Error(value.guidance??value.error??"Request failed"); return value;
 }
 export const fetchGrantsData=()=>request<GrantsData>("/api/grants");
-export const saveProfile=(profile:GrantProfile,_meKey:string)=>request<GrantProfile>("/api/grants/profile","PUT",profile);
+export const saveProfile=(profile:GrantProfile,_meKey:string,completeSetup=false)=>request<GrantProfile>("/api/grants/profile","PUT",{...profile,completeSetup});
 export const setStarred=(id:string,v:boolean)=>request<GrantProgram>(`/api/grants/programs/${encodeURIComponent(id)}`,"PATCH",{starred:v});
 export const setDismissed=(id:string,v:boolean)=>request<GrantProgram>(`/api/grants/programs/${encodeURIComponent(id)}`,"PATCH",{dismissed:v});
 export const setFeedback=(id:string,v:"up"|"down"|null)=>request<GrantProgram>(`/api/grants/programs/${encodeURIComponent(id)}`,"PATCH",{feedback:v});

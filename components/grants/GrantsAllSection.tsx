@@ -77,15 +77,15 @@ export function GrantsAllSection({ programs, profileUpdatedAt, onOpen, onToggleS
         }}
       >
         {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        전체 매칭 {live.length}건
-        {!expanded && <span style={{ fontSize: 12.5, fontWeight: 400, color: "var(--text-muted)" }}>: 검색·필터는 펼쳐서</span>}
+        All announcements ({live.length})
+        {!expanded && <span style={{ fontSize: 12.5, fontWeight: 400, color: "var(--text-muted)" }}>: expand to search and filter</span>}
       </button>
 
       {expanded && (
         <div className="sx-anim-view" style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
             <div style={{ width: 240 }}>
-              <Input size="sm" icon={<Search size={14} />} placeholder="공고 검색" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Input size="sm" icon={<Search size={14} />} placeholder="Search announcements" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
             <div style={{ display: "flex", gap: 4 }}>
               {GRADE_ORDER.map((g) => (
@@ -112,10 +112,10 @@ export function GrantsAllSection({ programs, profileUpdatedAt, onOpen, onToggleS
               value={source}
               onChange={(e) => setSource(e.target.value)}
               options={[
-                { value: "all", label: "출처 전체" },
-                { value: "bizinfo", label: "기업마당" },
+                { value: "all", label: "All sources" },
+                { value: "bizinfo", label: "Bizinfo" },
                 { value: "kstartup", label: "K-Startup" },
-                { value: "manual", label: "수동 등록" },
+                { value: "manual", label: "Manual import" },
               ]}
             />
             <Select
@@ -123,18 +123,18 @@ export function GrantsAllSection({ programs, profileUpdatedAt, onOpen, onToggleS
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
               options={[
-                { value: "score", label: "등급·점수순" },
-                { value: "deadline", label: "마감 임박순" },
+                { value: "score", label: "Grade and score" },
+                { value: "deadline", label: "Closing soonest" },
               ]}
             />
             <span style={{ flex: 1 }} />
             <Switch size="sm" checked={hideExpired} onChange={(e) => setHideExpired(e.target.checked)}>
-              마감 지난 공고 숨기기{expiredCount > 0 ? ` (${expiredCount})` : ""}
+              Hide closed announcements{expiredCount > 0 ? ` (${expiredCount})` : ""}
             </Switch>
           </div>
 
           {filtered.length === 0 ? (
-            <EmptyState title="조건에 맞는 공고가 없습니다" description="검색어나 필터를 조정해보세요." />
+            <EmptyState title="No matching announcements" description="Try changing your search or filters." />
           ) : (
             <div className="sx-grid-m1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
               {filtered.map((p) => (

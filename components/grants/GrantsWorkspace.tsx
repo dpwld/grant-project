@@ -15,6 +15,7 @@ import {
   type GrantProfile, type GrantProgram, type GrantSyncRun,
 } from "@/lib/data/grants";
 import { grantReviewPresentation } from "@/lib/grants/reviewPresentation";
+import { hasCompanySetup } from "@/lib/server/validation";
 import { needsReview } from "@/lib/grants/assessment";
 import { runGrantReview, type ReviewProgress } from "@/lib/grants/reviewQueue";
 import { daysUntil } from "@/components/pm/pmFormat";
@@ -26,8 +27,7 @@ import { GrantCard } from "./GrantCard";
 import { GrantDrawer } from "./GrantDrawer";
 import { GrantsProfileTab } from "./GrantsProfileTab";
 
-/* 지원사업 추천 워크스페이스 — Poliflo 벤치마크(docs/competitor-poliflo-salesforce.md §3A).
-   수집(동기화) → AI 매칭(S~D) → 이번 주 3건 히어로 → Sprint Dashboard 태스크 전환. UI는 한국어. */
+/* Owner-scoped company setup, grant review, and application handoff. */
 
 type TabValue = "recommend" | "profile" | "archive";
 type ToastMsg = { tone: "success" | "danger"; title: string; text: string };
@@ -37,6 +37,7 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
   const meKey = me.id;
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [programs, setPrograms] = useState<GrantProgram[]>([]);
   const [profile, setProfile] = useState<GrantProfile | null>(null);
   const [lastSync, setLastSync] = useState<GrantSyncRun | null>(null);
@@ -65,7 +66,7 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
         setLastSync(d.lastSync);
       })
       .catch(() => {
-        if (alive) setToast({ tone: "danger", title: "로드 실패", text: "지원사업 데이터를 불러오지 못했습니다. 새로고침해주세요." });
+        if (alive) setLoadError(true);
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -85,8 +86,8 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
       pendingImports.current.delete(message.grantId);
       void linkSprintTask(message.grantId,message.taskId).then(updated=>{
         setPrograms(prev=>prev.map(p=>p.id===updated.id?updated:p));
-        setToast({tone:"success",title:"Sprint Dashboard에 추가됨",text:"태스크를 생성하고 공고와 연결했습니다."});
-      }).catch(()=>setToast({tone:"danger",title:"연결 저장 실패",text:"Sprint Dashboard 태스크는 생성되었지만 공고 연결을 저장하지 못했습니다. 다시 열어 연결해주세요."}));
+        setToast({tone:"success",title:"Added to Sprint Dashboard",text:"The task was created and linked to this announcement."});
+      }).catch(()=>setToast({tone:"danger",title:"Could not save the link",text:"The Sprint Dashboard task was created, but its link could not be saved. Open it again to retry."}));
     };
     window.addEventListener("message",receive);return()=>window.removeEventListener("message",receive);
   },[sprintUrl]);
@@ -96,20 +97,20 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
 
   const fail = (title: string) => (err: unknown) => {
     console.error(err);
-    setToast({ tone: "danger", title, text: "저장에 실패했습니다. 다시 시도해주세요." });
+    setToast({ tone: "danger", title, text: "Could not save. Please try again." });
   };
 
-  const handleToggleStar = (p: GrantProgram) => setStarred(p.id, !p.starred).then(patchLocal).catch(fail("별표"));
+  const handleToggleStar = (p: GrantProgram) => setStarred(p.id, !p.starred).then(patchLocal).catch(fail("Star"));
   const handleFeedback = (p: GrantProgram, v: "up" | "down") =>
-    setFeedback(p.id, p.feedback === v ? null : v).then(patchLocal).catch(fail("피드백"));
+    setFeedback(p.id, p.feedback === v ? null : v).then(patchLocal).catch(fail("Feedback"));
   const handleDismiss = (p: GrantProgram) =>
     setDismissed(p.id, true)
       .then((u) => {
         patchLocal(u);
-        setToast({ tone: "success", title: "추천에서 제외", text: "보관함 탭에서 언제든 복원할 수 있습니다." });
+        setToast({ tone: "success", title: "Archived", text: "You can restore it from Archive at any time." });
       })
-      .catch(fail("제외"));
-  const handleRestore = (p: GrantProgram) => setDismissed(p.id, false).then(patchLocal).catch(fail("복원"));
+      .catch(fail("Archive"));
+  const handleRestore = (p: GrantProgram) => setDismissed(p.id, false).then(patchLocal).catch(fail("Restore"));
 
   const handleSync = async () => {
     setSyncing(true);
@@ -118,26 +119,26 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
       const res = await fetch("/api/grants/sync", { method: "POST" });
       const json = await res.json() as { error?: string; guidance?: string; results?: {source:string;fetched:number;error?:string}[] };
       if (res.status === 503 && json.error === "api_key_missing") {
-        setKeyGuidance(json.guidance ?? "API 키가 설정되지 않았습니다.");
+        setKeyGuidance(json.guidance ?? "An API key has not been configured.");
         return;
       }
       const results = (json.results ?? []) as { source: string; fetched: number; error?: string }[];
       // 소스별 결과를 그대로 보여준다 — 실패 원인(키 미등록 등)이 토스트에 남게.
-      const label = (s: string) => (s === "bizinfo" ? "기업마당" : s === "kstartup" ? "K-Startup" : s);
-      const parts = results.map((r) => (r.error ? `${label(r.source)} 오류: ${r.error}` : `${label(r.source)} ${r.fetched}건`));
+      const label = (s: string) => (s === "bizinfo" ? "Bizinfo" : s === "kstartup" ? "K-Startup" : s);
+      const parts = results.map((r) => (r.error ? `${label(r.source)} error: ${r.error}` : `${label(r.source)}: ${r.fetched} records`));
       const complete = results.length > 0 && results.every((r) => !r.error);
       if (!res.ok && results.length === 0) throw new Error(json.error ?? "sync failed");
       setToast(
         complete
-          ? { tone: "success", title: "동기화 완료", text: parts.join(" · ") }
-          : { tone: "danger", title: "전체 수집 미완료", text: parts.join(" · ") || "공고 수집에 실패했습니다." },
+          ? { tone: "success", title: "Sync complete", text: parts.join(" · ") }
+          : { tone: "danger", title: "Collection incomplete", text: parts.join(" · ") || "Could not collect announcements." },
       );
       const d = await fetchGrantsData();
       setPrograms(d.programs);
       setLastSync(d.lastSync);
     } catch (err) {
       console.error(err);
-      setToast({ tone: "danger", title: "동기화 실패", text: "공고 수집에 실패했습니다. 잠시 후 다시 시도해주세요." });
+      setToast({ tone: "danger", title: "Sync failed", text: "Could not collect announcements. Please try again later." });
     } finally {
       setSyncing(false);
     }
@@ -151,7 +152,7 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
     setReviewProgress(null);
     try {
       const current = await fetchGrantsData();
-      if (!current.profile) { setTab("profile"); throw new Error("기업 프로필을 먼저 저장해주세요."); }
+      if (!current.profile || !hasCompanySetup(current.profile)) { setTab("profile"); throw new Error("Complete your company setup first."); }
       setPrograms(current.programs);
       setProfile(current.profile);
       const queue = current.programs.filter(p => !p.dismissed && !isExpired(p)
@@ -173,14 +174,14 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
               : failure?.assessment ? { ...p, assessment: failure.assessment } : p;
           }));
           return { results: json.results ?? [], failed: json.failed ?? [],
-            fatalError: !res.ok ? json.guidance ?? json.detail ?? json.error ?? "심사 요청 실패" : undefined };
+            fatalError: !res.ok ? json.guidance ?? json.detail ?? json.error ?? "Review request failed" : undefined };
         },
       });
       if (mounted.current) setToast({ tone: result.failed.length ? "danger" : "success",
-        title: result.stopped ? "심사 중지됨" : result.failed.length ? "일부 공고 재시도 필요" : "전체 심사 완료",
-        text: `${result.total}건 중 ${result.completed}건 완료 · 실패 ${result.failed.length}건. ${result.stopped || result.failed.length ? "저장된 결과를 유지하며 남은 공고는 이어서 심사할 수 있습니다." : "각 공고에서 평가 근거와 원문 확인 범위를 볼 수 있습니다."}` });
+        title: result.stopped ? "Review stopped" : result.failed.length ? "Some announcements need a retry" : "Review complete",
+        text: `${result.completed} of ${result.total} completed · ${result.failed.length} failed. ${result.stopped || result.failed.length ? "Saved results are kept. Resume reviewing the remaining announcements." : "Open an announcement to see the rationale and source coverage."}` });
     } catch (err) {
-      if (mounted.current) setToast({ tone: "danger", title: "심사가 중단됐습니다", text: `${err instanceof Error ? err.message : "요청 실패"} 완료된 결과는 저장되어 있습니다. 남은 공고 심사를 다시 실행해주세요.` });
+      if (mounted.current) setToast({ tone: "danger", title: "Review interrupted", text: `${err instanceof Error ? err.message : "Request failed"} Completed results are saved. Run the remaining review again.` });
     } finally {
       const current = await fetchGrantsData().catch(() => null);
       if (mounted.current) { if (current) setPrograms(current.programs); setMatching(false); }
@@ -188,39 +189,40 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
     }
   };
 
-  const handleSaveProfile = async (p: GrantProfile) => {
+  const handleSaveProfile = async (p: GrantProfile, completeSetup: boolean) => {
     setSavingProfile(true);
     try {
-      const saved = await saveProfile(p, meKey);
+      const saved = await saveProfile(p, meKey, completeSetup);
       setProfile(saved);
-      setToast({ tone: "success", title: "프로필 저장됨", text: "다음 AI 매칭부터 반영됩니다." });
+      if (!hasCompanySetup(profile) && completeSetup) setTab("recommend");
+      setToast({ tone: "success", title: "Profile saved", text: hasCompanySetup(saved) ? "Your next AI review will use the saved profile." : "Draft saved. Return here to finish company setup." });
     } catch (err) {
       console.error(err);
-      setToast({ tone: "danger", title: "저장 실패", text: "프로필 저장에 실패했습니다." });
+      throw new Error(err instanceof Error ? err.message : "Could not save the profile. Your entries are still here; please retry.");
     } finally {
       setSavingProfile(false);
     }
   };
 
   const handleAddToSprint = async (p: GrantProgram) => {
-    if (!sprintUrl) {setToast({tone:"danger",title:"Sprint Dashboard 연결 필요",text:"서버의 SPRINT_SERVICE_URL에 본인 Sprint Dashboard 웹서비스 주소를 설정해주세요."});return;}
+    if (!sprintUrl) {setToast({tone:"danger",title:"Connect Sprint Dashboard",text:"Set SPRINT_SERVICE_URL to your Sprint Dashboard service address on the server."});return;}
     const left=daysUntil(p.applyEnd);
-    const payload={title:`신청 준비: ${p.title}`,description:[p.url?`공고 원문: ${p.url}`:"",p.why?`${grantReviewPresentation(p, profile?.updatedAt ?? "").stale ? "이전 평가 이유 (재심사 필요)" : "AI 추천 이유"}: ${p.why}`:""].filter(Boolean).join("\n\n"),dueDate:p.applyEnd,priority:left!=null&&left<=14?"high":"medium",...(p.url?{sourceUrl:p.url}:{}),grantId:p.id};
+    const payload={title:`Prepare application: ${p.title}`,description:[p.url?`Official announcement: ${p.url}`:"",p.why?`${grantReviewPresentation(p, profile?.updatedAt ?? "").stale ? "Previous rationale (review again)" : "AI rationale"}: ${p.why}`:""].filter(Boolean).join("\n\n"),dueDate:p.applyEnd,priority:left!=null&&left<=14?"high":"medium",...(p.url?{sourceUrl:p.url}:{}),grantId:p.id};
     const encoded=btoa(Array.from(new TextEncoder().encode(JSON.stringify(payload)),b=>String.fromCharCode(b)).join("")).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
     const popup=window.open(`${sprintUrl}/import/grant?payload=${encoded}`,"_blank");
     if(popup)pendingImports.current.set(p.id,popup);
-    setToast({tone:"success",title:"Sprint Dashboard에서 확인",text:"열린 Sprint Dashboard 화면에서 내용을 확인한 후 태스크를 생성하세요. 같은 공고를 다시 보내도 중복 생성되지 않습니다."});
+    setToast({tone:"success",title:"Continue in Sprint Dashboard",text:"Review the details in Sprint Dashboard and create the task there. Sending the same announcement again will not create a duplicate."});
   };
 
   const handleImport = async (file:File|undefined)=>{
     if(!file)return;
     try {
-      if(file.size>1_000_000)throw new Error("JSON 파일을 1MB 이하로 나눠주세요.");
+      if(file.size>1_000_000)throw new Error("Split the JSON file into files of 1 MB or less.");
       const response=await fetch("/api/grants/import",{method:"POST",headers:{"Content-Type":"application/json"},body:await file.text()});
-      const value=await response.json() as {error?:string;inserted:number};if(!response.ok)throw new Error(value.error??"가져오기 실패");
+      const value=await response.json() as {error?:string;inserted:number};if(!response.ok)throw new Error(value.error??"Import failed");
       const current=await fetchGrantsData();setPrograms(current.programs);setLastSync(current.lastSync);
-      setToast({tone:"success",title:"공고 가져옴",text:`${value.inserted}건을 서버에 저장했습니다.`});
-    }catch(error){setToast({tone:"danger",title:"가져오기 실패",text:error instanceof Error?error.message:"파일을 확인해주세요."});}
+      setToast({tone:"success",title:"Announcements imported",text:`Saved ${value.inserted} announcements to your account.`});
+    }catch(error){setToast({tone:"danger",title:"Import failed",text:error instanceof Error?error.message:"Please check the file."});}
   };
 
   if (loading) {
@@ -231,6 +233,12 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
     );
   }
 
+  if (loadError) return <div className="setup-wrap"><Alert tone="danger" title="Could not load your workspace">Please retry before editing your company information.</Alert><Button onClick={() => window.location.reload()}>Retry</Button></div>;
+  if (!hasCompanySetup(profile)) return <div className="setup-wrap">
+    <header className="setup-intro"><span className="setup-step">Company setup</span><h1>{profile ? "Finish your company setup" : "Tell us about your company"}</h1><p>Save your company information before exploring grant recommendations. Your profile helps assess location, business age, industry, and eligibility.</p><p className="profile-hint">{profile ? "Your saved draft is ready below." : "Start with your own information. No company details have been filled in."} You can edit everything later in Profile.</p></header>
+    <GrantsProfileTab key={profile?.updatedAt ?? "empty"} profile={profile} saving={savingProfile} onboarding onSave={handleSaveProfile} />
+    {toast && <Toast tone={toast.tone} title={toast.title} onClose={() => setToast(null)}>{toast.text}</Toast>}
+  </div>;
   const comp = profileCompleteness(profile);
   const openProgram = programs.find((p) => p.id === openId) ?? null;
   const dismissed = programs.filter((p) => p.dismissed);
@@ -241,61 +249,61 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
       <div className="sx-anim-view" style={{ maxWidth: 1560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       <header style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-strong)", margin: 0 }}>지원사업 추천</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-strong)", margin: 0 }}>Grant recommendations</h1>
           <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "4px 0 0" }}>
-            기업마당·K-Startup 공고를 기업 프로필로 AI 매칭합니다
+            Match Bizinfo and K-Startup announcements to your company profile
           </p>
         </div>
         <span style={{ flex: 1 }} />
         <Tag size="sm" onClick={() => setTab("profile")} active={comp.pct < 60}>
-          프로필 완성도 {comp.pct}%
+          Profile completeness {comp.pct}%
         </Tag>
         {lastSync && (
           <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-            마지막 동기화 {new Date(lastSync.ranAt).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            Last sync {new Date(lastSync.ranAt).toLocaleString("en-US", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
         <Button variant="secondary" size="sm" loading={syncing} disabled={matching} onClick={handleSync}>
-          <RefreshCw size={14} /> 공고 동기화
+          <RefreshCw size={14} /> Sync announcements
         </Button>
         <Button variant="primary" size="sm" loading={matching} disabled={syncing} onClick={() => void handleMatch()}>
-          <Sparkles size={14} /> 남은 공고 전체 심사{unmatchedCount > 0 ? ` (${unmatchedCount})` : ""}
+          <Sparkles size={14} /> Review remaining{unmatchedCount > 0 ? ` (${unmatchedCount})` : ""}
         </Button>
         {/* Snapshot all eligible IDs once; each is processed at most once in this run. */}
-        <Button variant="ghost" size="sm" disabled={matching || syncing} title="모집중 전체 공고의 기존 등급도 처음부터 다시 심사합니다"
+        <Button variant="ghost" size="sm" disabled={matching || syncing} title="Review every open announcement again, including existing grades"
           onClick={() => void handleMatch("all")}>
-          전체 다시 심사
+          Review all again
         </Button>
       </header>
 
       {reviewProgress && (
-        <section aria-label="전체 심사 진행 상황" style={{ border: "1px solid var(--border-default)", borderRadius: 12, padding: 16 }}>
-          <strong>{matching ? "전체 공고를 심사하고 있습니다" : reviewProgress.stopped ? "심사가 중지됐습니다" : "이번 심사 결과"}</strong>
+        <section aria-label="Review progress" style={{ border: "1px solid var(--border-default)", borderRadius: 12, padding: 16 }}>
+          <strong>{matching ? "Reviewing announcements" : reviewProgress.stopped ? "Review stopped" : "Review results"}</strong>
           <p role="status" style={{ margin: "8px 0" }}>
-            대상 {reviewProgress.total}건 · 완료 {reviewProgress.completed}건 · 실패 {reviewProgress.failed.length}건 · 남음 {Math.max(0, reviewProgress.total - reviewProgress.completed - reviewProgress.failed.length)}건
+            Total {reviewProgress.total} · Complete {reviewProgress.completed} · Failed {reviewProgress.failed.length} · Remaining {Math.max(0, reviewProgress.total - reviewProgress.completed - reviewProgress.failed.length)}
           </p>
-          <progress aria-label="공고 심사 진행률" max={Math.max(1, reviewProgress.total)} value={reviewProgress.completed + reviewProgress.failed.length} style={{ width: "100%" }} />
-          {matching && <p style={{ fontSize: 13 }}>이 화면을 열어두면 끝까지 이어서 처리합니다. 중지하거나 화면을 닫아도 완료된 결과는 저장됩니다.</p>}
-          {matching && <Button variant="secondary" size="sm" onClick={() => { stopReview.current = true; }}>현재 처리 후 중지</Button>}
-          {reviewProgress.failed.length > 0 && <details><summary>실패한 공고 {reviewProgress.failed.length}건</summary>
+          <progress aria-label="Announcement review progress" max={Math.max(1, reviewProgress.total)} value={reviewProgress.completed + reviewProgress.failed.length} style={{ width: "100%" }} />
+          {matching && <p style={{ fontSize: 13 }}>Keep this page open to finish the queue. Completed results are saved if you stop or close it.</p>}
+          {matching && <Button variant="secondary" size="sm" onClick={() => { stopReview.current = true; }}>Stop after this batch</Button>}
+          {reviewProgress.failed.length > 0 && <details><summary>Failed announcements: {reviewProgress.failed.length}</summary>
             <ul>{reviewProgress.failed.map(f => <li key={f.id}><button onClick={() => setOpenId(f.id)}>{programs.find(p => p.id === f.id)?.title ?? f.id}</button>: {f.error}</li>)}</ul>
           </details>}
         </section>
       )}
 
       {keyGuidance && (
-        <Alert tone="warning" title="공고 수집 API 키가 아직 없습니다" onClose={() => setKeyGuidance(null)}>
-          {keyGuidance} 키가 없어도 이미 수집된 공고로 매칭·검토는 가능합니다.
+        <Alert tone="warning" title="Announcement API keys are not configured" onClose={() => setKeyGuidance(null)}>
+          {keyGuidance} You can still browse imported announcements. AI reviews require a separate AI connection.
         </Alert>
       )}
 
-      <details className="import-help"><summary>공고 데이터 가져오기 · 연결 안내</summary><p>수집 API는 서버 환경변수에 본인 인증키를 설정한 뒤 사용할 수 있습니다. 직접 확보한 공고는 JSON으로 가져올 수 있습니다.</p><label>공고 JSON 파일 <input type="file" accept=".json,application/json" onChange={event=>{void handleImport(event.target.files?.[0]);event.target.value="";}} /></label><p><a href="/import-format.json" download>공고 필드 명세 내려받기</a> · 최대 500건 / 1MB. 예시 데이터는 자동으로 채워지지 않습니다.</p></details>
+      <details className="import-help"><summary>Import announcements · connection setup</summary><p>Configure your collection API keys on the server to sync announcements. You can also import announcement records as JSON.</p><label>Announcement JSON file <input type="file" accept=".json,application/json" onChange={event=>{void handleImport(event.target.files?.[0]);event.target.value="";}} /></label><p><a href="/import-format.json" download>Download the field specification</a> · Up to 500 records / 1 MB. Example records are never added automatically.</p></details>
 
       <Tabs
         items={[
-          { value: "recommend", label: "추천" },
-          { value: "profile", label: "프로필" },
-          { value: "archive", label: "보관함", count: dismissed.length || undefined },
+          { value: "recommend", label: "Recommendations" },
+          { value: "profile", label: "Profile" },
+          { value: "archive", label: "Archive", count: dismissed.length || undefined },
         ]}
         value={tab}
         onChange={(v) => setTab(v as TabValue)}
@@ -323,13 +331,13 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
         </div>
       )}
 
-      {tab === "profile" && (
-        <GrantsProfileTab key={profile ? "loaded" : "empty"} profile={profile} saving={savingProfile} onSave={handleSaveProfile} />
-      )}
+      <div hidden={tab !== "profile"}>
+        <GrantsProfileTab key={profile?.updatedAt ?? "empty"} profile={profile} saving={savingProfile} onSave={handleSaveProfile} />
+      </div>
 
       {tab === "archive" &&
         (dismissed.length === 0 ? (
-          <EmptyState title="보관함이 비어 있습니다" description="추천에서 뺀 공고가 여기에 모입니다." />
+          <EmptyState title="Your archive is empty" description="Announcements removed from recommendations appear here." />
         ) : (
           <div className="sx-grid-m1" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
             {dismissed.map((p) => (
@@ -343,7 +351,7 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
                   onDismiss={() => handleRestore(p)}
                 />
                 <Button variant="ghost" size="sm" onClick={() => handleRestore(p)}>
-                  <ArchiveRestore size={14} /> 추천으로 복원
+                  <ArchiveRestore size={14} /> Restore to recommendations
                 </Button>
               </div>
             ))}

@@ -29,14 +29,14 @@ export async function runGrantReview(ids: string[], options: {
         const done = new Set(result.results.map(r => r.id));
         for (const id of batch) {
           if (done.has(id)) progress.completed++;
-          else progress.failed.push({ id, error: result.failed.find(r => r.id === id)?.error ?? "심사 결과가 누락됐습니다" });
+          else progress.failed.push({ id, error: result.failed.find(r => r.id === id)?.error ?? "The review result was missing" });
         }
         if (result.fatalError) fatal = new Error(result.fatalError);
       } catch (error) {
         // Authentication, configuration and transport failures stop scheduling;
         // do not turn one outage into dozens of failed paid requests.
         fatal = error;
-        progress.failed.push(...batch.map(id => ({ id, error: error instanceof Error ? error.message : "요청 실패" })));
+        progress.failed.push(...batch.map(id => ({ id, error: error instanceof Error ? error.message : "Request failed" })));
       }
       options.onProgress({ ...progress, failed: [...progress.failed] });
     }

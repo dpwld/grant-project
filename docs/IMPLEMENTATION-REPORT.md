@@ -2,9 +2,17 @@
 
 ## Preserved workflows
 
-The original Grants recommendation, profile and archive components retain their fields, filters, presets, detail drawer and review queue. Original paginated collection, source verification, assessment signatures and bounded batch accounting are retained. Visual tokens use a monochrome palette and a locally hosted Pretendard font.
+The original Grants recommendation, profile and archive components retain their fields, filters, presets, detail drawer and review queue. Original paginated collection, source verification, assessment signatures and bounded batch accounting are retained. Visual tokens use white surfaces, a subtle sky-blue canvas, readable blue actions, and distinct success, warning, and error colors. Pretendard remains locally hosted.
 
 The browser-local prototype is superseded. Profiles, announcements, reviews, feedback, stars, archive state and sync history now use authenticated server APIs and owner-scoped D1 records. The initial database is empty.
+
+## Company setup and English interface
+
+New and incomplete profiles open a company setup screen before recommendations. The six existing required fields determine readiness; no fabricated company details or separate database marker are introduced. A named draft can be saved to the same owner-scoped profile and resumed after reload. Complete profiles remain editable through Profile, and tab changes retain in-page unsaved edits. Shared form/server validation rejects invalid fields; failed saves preserve stored data and keep editable entries.
+
+Interface labels, actions, empty states, validation, integration guidance, and generated AI explanations use English. Original government announcement text, user content, provider keys, and Korean parser markers remain unchanged. Review version 3 marks older assessments stale without deleting them. The README and explicit local screenshot helper use fictional English examples.
+
+The product's browser verification for the new setup and theme is performed separately from this server/unit verification; historical browser checks below predate this change.
 
 ## Server behavior
 
@@ -23,9 +31,9 @@ Validated locally on 2026-10-20:
 
 | Check | Result |
 | --- | --- |
-| Domain and review presentation suite | 9 tests passed: pagination, repeated-page detection, stale review signatures, queue accounting, source restrictions, input validation and historical-result display |
-| Real Worker + D1 HTTP suite | Passed: authentication, ownership isolation, CSRF, CRUD, duplicate import preservation, explicit null, invalid-input preservation, missing integration settings and encoded record IDs |
-| Worker restart | Previously saved profile and curation remained after stopping and restarting the Worker |
+| Domain and review presentation suite | 11 tests passed: pagination, repeated-page detection, stale review signatures, queue accounting, source restrictions, input validation, company setup completeness, draft validation, future founding-date rejection, and historical-result display |
+| Real Worker + D1 HTTP suite | Passed: authentication, ownership isolation, CSRF, empty initial profile, saved drafts, completed setup, profile edits and reload, rejected-update preservation, duplicate import preservation, explicit null, missing integration settings, and encoded record IDs |
+| Worker restart | Saved profile edits and curation remained after stopping and restarting the Worker (reverified for company setup) |
 | Browser workflow | Saved a profile through the actual UI and confirmed it survived reload; disposable profile removed afterward |
 | Fresh local migration | Applied successfully to an isolated empty database; second application was a no-op |
 | Typecheck and production build | Passed after review fixes |

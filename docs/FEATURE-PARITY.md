@@ -4,7 +4,7 @@ Source: original GrantsWorkspace and its direct component/domain dependencies. T
 
 | Original workflow | Extraction |
 | --- | --- |
-| 추천 / 프로필 / 보관함 | Original components, complete profile fields and presets preserved |
+| Recommendations / Profile / Archive | Original workflows, complete profile fields and presets preserved; first-run company setup with saved drafts and later editing |
 | KPIs, top recommendations, filtering, grades, starred/feedback/archive/restore | Original components and classification logic; authenticated owned server records |
 | Official Bizinfo / K-Startup full paginated collection | Original parsing/collection; owned D1 upsert preserving curation; user-owned API keys required |
 | AI review, per-item sources/eligibility, progress, stop/resume, retry | Original assessment and bounded queue; real OpenAI request, user-owned key required |

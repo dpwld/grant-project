@@ -34,19 +34,19 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
   const review = p ? grantReviewPresentation(p, profileUpdatedAt) : null;
 
   return (
-    <Drawer open={!!p} onClose={onClose} title="공고 상세" width={560} closeOnOutside>
+    <Drawer open={!!p} onClose={onClose} title="Announcement details" width={560} closeOnOutside>
       {p && review && (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             {review.grade && (
               <span style={{ ...pillStyle(GRADE_COLOR[review.grade]), padding: "3px 12px", fontSize: 14 }}>
-                {review.grade}{review.score != null ? ` · ${review.score}점` : ""}
+                {review.grade}{review.score != null ? ` · ${review.score} pts` : ""}
               </span>
             )}
             {review.grade && <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{GRADE_LABEL[review.grade]}</span>}
             {review.statusLabel && <Tag size="sm">{review.statusLabel}</Tag>}
-            {review.failed && review.previous && <Tag size="sm">재심사 필요</Tag>}
-            {review.previous && p.grade && <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>이전 평가 {p.grade}{p.score != null ? ` · ${p.score}점` : ""}</span>}
+            {review.failed && review.previous && <Tag size="sm">Review again</Tag>}
+            {review.previous && p.grade && <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Previous review {p.grade}{p.score != null ? ` · ${p.score} pts` : ""}</span>}
             <Tag size="sm">{SOURCE_LABEL[p.source]}</Tag>
             {d && (
               <span
@@ -56,23 +56,23 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
                   fontSize: 12.5,
                 }}
               >
-                {d.overdue ? "마감됨" : d.label}
+                {d.overdue ? "Closed" : d.label}
               </span>
             )}
           </div>
 
-          {review.previous && <p role="status" style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>재심사 필요 · 아래 이전 평가는 현재 기업 프로필과 공고에 대한 추천이 아닙니다.</p>}
+          {review.previous && <p role="status" style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>Review again · The previous review below does not reflect the current company profile and announcement.</p>}
 
           <h3 style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.4, color: "var(--text-strong)", margin: 0 }}>{p.title}</h3>
 
           <Button variant="secondary" size="sm" loading={matching} disabled={p.dismissed || isExpired(p)} onClick={() => onMatch(p)}>
-            {p.grade ? "이 공고 다시 평가" : "이 공고 AI 매칭"}
+            {p.grade ? "Review this again" : "Review with AI"}
           </Button>
 
           <div style={{ display: "flex", gap: 8 }}>
             {p.url && (
               <Button variant="secondary" size="sm" onClick={() => window.open(p.url, "_blank", "noopener")}>
-                <ExternalLink size={14} /> 공고 원문 보기
+                <ExternalLink size={14} /> View official source
               </Button>
             )}
             <Button
@@ -82,14 +82,14 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
               disabled={!!p.sprintTaskId}
               onClick={() => onAddToSprint(p)}
             >
-              <ListPlus size={14} /> {p.sprintTaskId ? "Sprint Dashboard에 등록됨" : "Sprint Dashboard에 추가"}
+              <ListPlus size={14} /> {p.sprintTaskId ? "Added to Sprint Dashboard" : "Add to Sprint Dashboard"}
             </Button>
             <span style={{ flex: 1 }} />
             <Button
               variant={p.feedback === "up" ? "soft" : "ghost"}
               size="sm"
               onClick={() => onFeedback(p, "up")}
-              title="이 추천이 도움됨"
+              title="This recommendation is helpful"
             >
               <ThumbsUp size={14} />
             </Button>
@@ -97,7 +97,7 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
               variant={p.feedback === "down" ? "soft" : "ghost"}
               size="sm"
               onClick={() => onFeedback(p, "down")}
-              title="이 추천이 도움 안 됨"
+              title="This recommendation is not helpful"
             >
               <ThumbsDown size={14} />
             </Button>
@@ -105,26 +105,26 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
 
           <InfoGrid
             rows={[
-              ["접수 기간", p.applyStart || p.applyEnd ? `${p.applyStart ?? "?"} ~ ${p.applyEnd ?? "?"}` : "공고 원문 확인"],
-              ["지원 유형", p.supportTypes.join(", ") || "N/A"],
-              ["지원 대상", p.targets.join(", ") || "N/A"],
-              ["주관/지역", p.region || "N/A"],
-              ["지원 규모", p.amountText || "공고 원문 확인"],
+              ["Application period", p.applyStart || p.applyEnd ? `${p.applyStart ?? "?"} ~ ${p.applyEnd ?? "?"}` : "Check the official announcement"],
+              ["Support type", p.supportTypes.join(", ") || "N/A"],
+              ["Eligibility", p.targets.join(", ") || "N/A"],
+              ["Organization / region", p.region || "N/A"],
+              ["Support amount", p.amountText || "Check the official announcement"],
             ]}
           />
 
           {p.assessment && <section style={{ background: "var(--surface-subtle)", border: "1px solid var(--border-default)", borderRadius: 12, padding: 12 }}>
-            <SectionTitle>{review.failed ? "최근 심사 시도" : review.stale ? "이전 평가 심사 범위" : "심사 범위"}</SectionTitle>
-            {p.assessment.status === "failed" ? <p>심사 실패: {p.assessment.error} · 다시 평가하면 재시도합니다.</p> : <>
-              <p>{p.assessment.sourceStatus === "original" ? (p.assessment.truncated ? "공식 웹페이지 본문 일부 확인" : "공식 웹페이지 본문 확인") : "공식 본문 미확인 · 수집된 요약으로 평가"}</p>
+            <SectionTitle>{review.failed ? "Latest review attempt" : review.stale ? "Previous review coverage" : "Review coverage"}</SectionTitle>
+            {p.assessment.status === "failed" ? <p>Review failed: {p.assessment.error} · Run the review again to retry.</p> : <>
+              <p>{p.assessment.sourceStatus === "original" ? (p.assessment.truncated ? "Part of the official webpage was reviewed" : "The official webpage text was reviewed") : "Official text unavailable · assessed using the collected summary"}</p>
               {p.assessment.sourceError && <p>{p.assessment.sourceError}</p>}
-              <p>첨부 PDF·HWP 전체를 심사한 결과는 아닙니다. 신청 전 첨부의 세부 조건을 확인해주세요.</p>
+              <p>Attached PDF and HWP files were not reviewed in full. Check their detailed conditions before applying.</p>
             </>}
-            <span style={{ fontSize: 12 }}>{new Date(p.assessment.reviewedAt).toLocaleString("ko-KR")}</span>
+            <span style={{ fontSize: 12 }}>{new Date(p.assessment.reviewedAt).toLocaleString("en-US")}</span>
           </section>}
           {p.why && (
             <section>
-              <SectionTitle>{review.stale ? "이전 평가 이유" : "AI 추천 이유"}</SectionTitle>
+              <SectionTitle>{review.stale ? "Previous rationale" : "AI rationale"}</SectionTitle>
               <p style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text-default)", margin: 0, whiteSpace: "pre-wrap" }}>{p.why}</p>
               {p.matchedTags.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
@@ -140,7 +140,7 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
 
           {p.eligibility.length > 0 && (
             <section>
-              <SectionTitle>{review.stale ? "이전 평가 적합성 체크포인트" : "적합성 체크포인트"}</SectionTitle>
+              <SectionTitle>{review.stale ? "Previous eligibility checks" : "Eligibility checks"}</SectionTitle>
               <div style={{ border: "1px solid var(--border-default)", borderRadius: 12, overflow: "hidden" }}>
                 {p.eligibility.map((e, i) => (
                   <div
@@ -162,14 +162,14 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
                 ))}
               </div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8, marginBottom: 0 }}>
-                {review.stale ? "이전 평가입니다. 재심사 전에는 현재 적합성으로 판단하지 마세요. " : ""}AI 판단은 참고용입니다: 신청 전 반드시 공고 원문의 자격요건을 확인하세요.
+                {review.stale ? "This is a previous review. Run it again before assessing current eligibility. " : ""}AI assessments are guidance. Verify eligibility in the official announcement before applying.
               </p>
             </section>
           )}
 
           {p.summary && (
             <section>
-              <SectionTitle>공고 요약</SectionTitle>
+              <SectionTitle>Announcement summary</SectionTitle>
               <p style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text-default)", margin: 0, whiteSpace: "pre-wrap" }}>{p.summary}</p>
             </section>
           )}

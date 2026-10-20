@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Grant Project — 지원사업 탐색과 신청 준비",
-  description: "공고 수집부터 기업 프로필 매칭, 검토와 신청 준비까지.",
+  title: "Grant Project — Discover grants and prepare applications",
+  description: "Collect announcements, match your company profile, and prepare applications.",
   other: {
     "codex-preview": "development",
   },
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body className="antialiased">{children}</body>
     </html>
   );

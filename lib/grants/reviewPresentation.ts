@@ -11,6 +11,6 @@ export function grantReviewPresentation(program: GrantProgram, profileUpdatedAt:
   stale, failed, previous, grade,
   score: stale ? null : program.score,
   rank: grade ? ['S', 'A', 'B', 'C', 'D'].indexOf(grade) : 5,
-  statusLabel: failed ? '심사 실패' : stale ? previous ? '재심사 필요' : '미심사' : null,
+  statusLabel: failed ? 'Review failed' : stale ? previous ? 'Review again' : 'Not reviewed' : null,
  };
 }

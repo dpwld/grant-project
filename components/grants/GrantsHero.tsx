@@ -47,25 +47,25 @@ export function GrantsHero({ programs, profileUpdatedAt = "", onOpen, onAddToSpr
   return (
     <section>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-strong)", margin: 0 }}>이번 주 먼저 검토할 {picks.length}건</h2>
-        <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>AI 추천은 참고용: 자격요건은 반드시 공고 원문에서 확인하세요.</span>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-strong)", margin: 0 }}>Top {picks.length} to review this week</h2>
+        <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Verify eligibility in the official announcement before applying.</span>
       </div>
 
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 12px" }}>
-        심사 대상 {active.length}건 · 평가 완료 {evaluated}건 · 미평가·재심사 {pending}건 · 실패 {failed}건
+        Eligible {active.length} · Reviewed {evaluated} · Pending or stale {pending} · Failed {failed}
       </p>
 
       <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "0 0 12px" }}>
-        공식 본문 확인 {original}건 · 평가 중 원문 미확인·일부 확인 {evaluated - original}건. 마감일 미확인 공고를 포함하며, 첨부문서와 최종 신청자격은 별도 확인이 필요합니다.
+        Full source reviewed: {original} · Summary or partial source: {evaluated - original}. Some deadlines are unknown. Verify attachments and final eligibility separately.
       </p>
       {picks.length === 0 ? (
         <EmptyState
-          title={pending > 0 ? "아직 평가하지 않은 공고가 있습니다" : active.length > 0 ? "평가된 공고 중 추천 후보가 없습니다" : "접수 가능한 공고가 없습니다"}
+          title={pending > 0 ? "Some announcements still need review" : active.length > 0 ? "No recommended candidates among reviewed announcements" : "No open announcements yet"}
           description={pending > 0
-            ? "[남은 공고 전체 심사]를 한 번 실행하면 모든 대상 공고를 이어서 심사합니다. 미평가가 남아 있으므로 추천 대상이 없다고 판단할 수 없습니다."
+            ? "Select Review remaining to process the queue. Unreviewed announcements may still be suitable."
             : active.length > 0
-              ? `${evaluated}건을 평가했으며 현재 S·A·B 등급 후보가 없습니다. 새 공고를 동기화하거나 프로필과 평가 내용을 확인해주세요.`
-              : "새 공고를 동기화하고 접수 기간을 확인해주세요."}
+              ? `${evaluated} reviewed; no current S, A, or B candidates. Sync new announcements or check your profile and review details.`
+              : "Sync or import announcements, then check their application periods."}
         />
       ) : (
         <div className="sx-grid-m1" style={{ display: "grid", gridTemplateColumns: `repeat(${picks.length}, 1fr)`, gap: 14 }}>
@@ -135,7 +135,7 @@ export function GrantsHero({ programs, profileUpdatedAt = "", onOpen, onAddToSpr
                 <div style={{ display: "flex", gap: 8 }}>
                   {p.url && (
                     <Button variant="secondary" size="sm" onClick={() => window.open(p.url, "_blank", "noopener")}>
-                      <ExternalLink size={14} /> 원문 보기
+                      <ExternalLink size={14} /> View source
                     </Button>
                   )}
                   <Button
@@ -145,10 +145,10 @@ export function GrantsHero({ programs, profileUpdatedAt = "", onOpen, onAddToSpr
                     disabled={!!p.sprintTaskId}
                     onClick={() => onAddToSprint(p)}
                   >
-                    <ListPlus size={14} /> {p.sprintTaskId ? "Sprint Dashboard에 있음" : "Sprint Dashboard에 추가"}
+                    <ListPlus size={14} /> {p.sprintTaskId ? "In Sprint Dashboard" : "Add to Sprint Dashboard"}
                   </Button>
                   <span style={{ flex: 1 }} />
-                  <Button variant="ghost" size="sm" onClick={() => onDismiss(p)} title="이번 추천에서 빼기">
+                  <Button variant="ghost" size="sm" onClick={() => onDismiss(p)} title="Archive recommendation">
                     <X size={14} />
                   </Button>
                 </div>
