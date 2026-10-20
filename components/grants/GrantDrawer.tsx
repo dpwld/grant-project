@@ -82,7 +82,7 @@ export function GrantDrawer({ program: p, profileUpdatedAt, onClose, onAddToSpri
               disabled={!!p.sprintTaskId}
               onClick={() => onAddToSprint(p)}
             >
-              <ListPlus size={14} /> {p.sprintTaskId ? "Sprint에 등록됨" : "Sprint에 추가"}
+              <ListPlus size={14} /> {p.sprintTaskId ? "Paceboard에 등록됨" : "Paceboard에 추가"}
             </Button>
             <span style={{ flex: 1 }} />
             <Button

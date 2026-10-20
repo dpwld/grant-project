@@ -145,7 +145,7 @@ export function GrantsHero({ programs, profileUpdatedAt = "", onOpen, onAddToSpr
                     disabled={!!p.sprintTaskId}
                     onClick={() => onAddToSprint(p)}
                   >
-                    <ListPlus size={14} /> {p.sprintTaskId ? "Sprint에 있음" : "Sprint에 추가"}
+                    <ListPlus size={14} /> {p.sprintTaskId ? "Paceboard에 있음" : "Paceboard에 추가"}
                   </Button>
                   <span style={{ flex: 1 }} />
                   <Button variant="ghost" size="sm" onClick={() => onDismiss(p)} title="이번 추천에서 빼기">

@@ -1,6 +1,6 @@
 <div align="center">
 
-# Grants
+# Grantory
 
 **지원사업을 찾고, 우리 기업에 맞는 공고를 검토하고, 신청 준비로 연결하는 웹서비스.**
 
@@ -8,7 +8,7 @@
 
 </div>
 
-![Grants 추천 화면 — 가상 데이터로 구성한 예시](docs/images/overview.png)
+![Grantory 추천 화면 — 가상 데이터로 구성한 예시](docs/images/overview.png)
 
 *가상 기업·지원사업·평가 등급으로 구성한 예시 화면입니다. 실제 공고나 AI 심사 결과가 아닙니다. 실제 서비스는 빈 데이터베이스로 시작합니다.*
 
@@ -25,7 +25,7 @@
 | `BIZINFO_API_KEY` | 기업마당 공고 동기화 | [기업마당 정책정보 개방](https://www.bizinfo.go.kr/apiList.do)에서 본인 인증키 준비 |
 | `KSTARTUP_API_KEY` | K-Startup 공고 동기화 | [공공데이터포털](https://www.data.go.kr/)에서 창업진흥원 K-Startup 조회서비스 활용 신청 |
 | `OPENAI_API_KEY` + `OPENAI_MODEL` | AI 매칭 / 재심사 | 본인 서버용 키와 구조화 출력 지원 모델 지정. 버튼 실행 시 API 사용량 발생 |
-| `SPRINT_SERVICE_URL` | 공고 → Sprint 태스크 | 본인의 Sprint 웹서비스 origin. 선택 설정 |
+| `SPRINT_SERVICE_URL` | 공고 → Paceboard 태스크 | 본인의 Paceboard 웹서비스 origin. 선택 설정 |
 
 수집 API는 둘 중 하나만 설정할 수도 있습니다. 미설정 출처는 별도로 안내되며, 해당 출처까지 수집했다고 표시하지 않습니다. AI 키가 없으면 등급을 임의 생성하지 않습니다.
 
@@ -74,7 +74,7 @@ node --experimental-strip-types scripts/readme-example.mjs cleanup
 | 공고 심사 | 공식 원문과 프로필을 바탕으로 등급·자격 체크포인트·추천 이유 저장 |
 | 전체 / 재심사 | 배치별 진행률·중지·실패 재시도, 프로필·공고 변경 시 재평가 표시 |
 | 검토 정리 | 등급별 필터, 검색, 별표, 피드백, 제외·복원, 상세 드로어 |
-| 신청 준비 | 별도 Sprint 웹서비스에서 내용을 확인하고 실제 태스크 생성. 동일 공고 재전송은 중복 생성 방지 |
+| 신청 준비 | 별도 Paceboard 웹서비스에서 내용을 확인하고 실제 태스크 생성. 동일 공고 재전송은 중복 생성 방지 |
 
 AI 결과에는 확인한 원문 범위와 한계가 남습니다. 첨부 PDF/HWP를 검토했다고 표시하지 않으며, 최종 자격 판단은 공식 원문을 기준으로 합니다.
 
@@ -87,7 +87,7 @@ flowchart LR
   API --> D1[(사용자별 D1 데이터)]
   API --> Public[기업마당 / K-Startup]
   API --> AI[OpenAI]
-  Browser --> Sprint[Sprint 신청 준비]
+  Browser --> Sprint[Paceboard 신청 준비]
 ```
 
 - `components/grants/`: 원래 추천·프로필·보관함 화면과 상세 컴포넌트
