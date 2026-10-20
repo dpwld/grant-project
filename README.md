@@ -41,7 +41,7 @@ npm run setup
 npm run dev -- --port 4311
 ```
 
-Local setup needs no ChatGPT account or paid API keys. The repository is currently private, so cloning requires access. `npm run setup` builds the service and applies committed local migrations without seeding data. See [Installation](docs/INSTALLATION.md), [Self-hosting in your own Cloudflare account](docs/SELF-HOSTING.md), and [Contributing](CONTRIBUTING.md).
+Local setup needs no ChatGPT account or paid API keys. `npm run setup` builds the service and applies committed local migrations without seeding data. See [Installation](docs/INSTALLATION.md), [Self-hosting in your own Cloudflare account](docs/SELF-HOSTING.md), and [Contributing](CONTRIBUTING.md).
 
 
 Add only your own keys for the features you use to `.dev.vars`. Basic storage works with empty integration values. `db:migrate` applies pending migrations to the local database under `.wrangler/state`. For later schema changes, edit `db/schema.ts`, run `npm run db:generate`, then `npm run db:migrate`.
@@ -98,7 +98,7 @@ The helper only uses `127.0.0.1:4311` and local D1 and rejects redirects. It cre
 
 ## Hosting
 
-The repository and hosted audience remain **private**. Preserve the existing project identity and `DB` binding in `.openai/hosting.json`. Configure server secrets in the hosting environment and keep them out of Git. Visibility changes require the owner's explicit instruction.
+The source repository is public. The author’s hosted workspace remains **private**. Preserve the existing project identity and `DB` binding in `.openai/hosting.json`. Configure server secrets in the hosting environment and keep them out of Git. Visibility changes require the owner's explicit instruction.
 
 For an independent installation, follow [Self-hosting](docs/SELF-HOSTING.md) to configure your own Workers, D1 and Cloudflare Access. Do not expose the default Sites-mode Worker directly as public authentication.
 
