@@ -27,7 +27,7 @@ import { GrantDrawer } from "./GrantDrawer";
 import { GrantsProfileTab } from "./GrantsProfileTab";
 
 /* 지원사업 추천 워크스페이스 — Poliflo 벤치마크(docs/competitor-poliflo-salesforce.md §3A).
-   수집(동기화) → AI 매칭(S~D) → 이번 주 3건 히어로 → Paceboard 태스크 전환. UI는 한국어. */
+   수집(동기화) → AI 매칭(S~D) → 이번 주 3건 히어로 → Sprint Dashboard 태스크 전환. UI는 한국어. */
 
 type TabValue = "recommend" | "profile" | "archive";
 type ToastMsg = { tone: "success" | "danger"; title: string; text: string };
@@ -85,8 +85,8 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
       pendingImports.current.delete(message.grantId);
       void linkSprintTask(message.grantId,message.taskId).then(updated=>{
         setPrograms(prev=>prev.map(p=>p.id===updated.id?updated:p));
-        setToast({tone:"success",title:"Paceboard에 추가됨",text:"태스크를 생성하고 공고와 연결했습니다."});
-      }).catch(()=>setToast({tone:"danger",title:"연결 저장 실패",text:"Paceboard 태스크는 생성되었지만 공고 연결을 저장하지 못했습니다. 다시 열어 연결해주세요."}));
+        setToast({tone:"success",title:"Sprint Dashboard에 추가됨",text:"태스크를 생성하고 공고와 연결했습니다."});
+      }).catch(()=>setToast({tone:"danger",title:"연결 저장 실패",text:"Sprint Dashboard 태스크는 생성되었지만 공고 연결을 저장하지 못했습니다. 다시 열어 연결해주세요."}));
     };
     window.addEventListener("message",receive);return()=>window.removeEventListener("message",receive);
   },[sprintUrl]);
@@ -203,13 +203,13 @@ export function GrantsWorkspace({sprintUrl}:{sprintUrl:string|null}) {
   };
 
   const handleAddToSprint = async (p: GrantProgram) => {
-    if (!sprintUrl) {setToast({tone:"danger",title:"Paceboard 연결 필요",text:"서버의 SPRINT_SERVICE_URL에 본인 Paceboard 웹서비스 주소를 설정해주세요."});return;}
+    if (!sprintUrl) {setToast({tone:"danger",title:"Sprint Dashboard 연결 필요",text:"서버의 SPRINT_SERVICE_URL에 본인 Sprint Dashboard 웹서비스 주소를 설정해주세요."});return;}
     const left=daysUntil(p.applyEnd);
     const payload={title:`신청 준비: ${p.title}`,description:[p.url?`공고 원문: ${p.url}`:"",p.why?`${grantReviewPresentation(p, profile?.updatedAt ?? "").stale ? "이전 평가 이유 (재심사 필요)" : "AI 추천 이유"}: ${p.why}`:""].filter(Boolean).join("\n\n"),dueDate:p.applyEnd,priority:left!=null&&left<=14?"high":"medium",...(p.url?{sourceUrl:p.url}:{}),grantId:p.id};
     const encoded=btoa(Array.from(new TextEncoder().encode(JSON.stringify(payload)),b=>String.fromCharCode(b)).join("")).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,"");
     const popup=window.open(`${sprintUrl}/import/grant?payload=${encoded}`,"_blank");
     if(popup)pendingImports.current.set(p.id,popup);
-    setToast({tone:"success",title:"Paceboard에서 확인",text:"열린 Paceboard 화면에서 내용을 확인한 후 태스크를 생성하세요. 같은 공고를 다시 보내도 중복 생성되지 않습니다."});
+    setToast({tone:"success",title:"Sprint Dashboard에서 확인",text:"열린 Sprint Dashboard 화면에서 내용을 확인한 후 태스크를 생성하세요. 같은 공고를 다시 보내도 중복 생성되지 않습니다."});
   };
 
   const handleImport = async (file:File|undefined)=>{
