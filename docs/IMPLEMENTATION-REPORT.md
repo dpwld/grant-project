@@ -32,6 +32,8 @@ Validated locally on 2026-10-20:
 
 Integration fixtures use isolated verification owners on loopback. They are never part of migrations, runtime seeds or hosted data.
 
+README examples use a separate explicit local helper, `scripts/readme-example.mjs`. It creates one fictional profile, eight fictional announcements and illustrative assessments, without any external API call. It refuses to overwrite a populated local workspace, rejects redirects and records fixture IDs for bounded cleanup. Captions identify both announcements and assessments as fictional; deployment databases remain empty.
+
 ## Configuration and current limits
 
 - Live government API collection and paid AI responses have not been exercised with operator credentials. Configure the keys listed in README, then validate those connections with your own data.

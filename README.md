@@ -8,9 +8,9 @@
 
 </div>
 
-![Grants 추천 화면 — 새 데이터베이스의 실제 실행 화면](docs/images/overview.png)
+![Grants 추천 화면 — 가상 데이터로 구성한 예시](docs/images/overview.png)
 
-*새 데이터베이스의 실제 실행 화면입니다. 공고는 직접 수집하거나 가져온 뒤 표시됩니다.*
+*가상 기업·지원사업·평가 등급으로 구성한 예시 화면입니다. 실제 공고나 AI 심사 결과가 아닙니다. 실제 서비스는 빈 데이터베이스로 시작합니다.*
 
 ## 시작 전 준비
 
@@ -48,6 +48,16 @@ npm run dev -- --port 4311 --hostname 127.0.0.1
 `.dev.vars`에는 사용할 기능의 본인 API 키만 넣습니다. 빈 값으로 시작해도 기본 저장 기능은 동작합니다. `db:migrate`는 `.wrangler/state`의 로컬 DB에 아직 적용하지 않은 마이그레이션만 적용합니다. 이후 스키마 변경은 `db/schema.ts` 수정 → `npm run db:generate` → `npm run db:migrate` 순서입니다.
 
 브라우저에서 `http://127.0.0.1:4311`을 엽니다. loopback 개발 로그인은 저장소 기본 런타임이 제공하는 테스트용 신원이며, 호스팅 인증에는 사용되지 않습니다. 사용자와 데이터는 서버에서 구분합니다.
+
+README 예시 화면을 재현하려면 비어 있는 로컬 개발 워크스페이스에서 아래 명령을 별도로 실행합니다.
+
+```sh
+node --experimental-strip-types scripts/readme-example.mjs seed
+# 촬영 후 생성한 예시만 제거
+node --experimental-strip-types scripts/readme-example.mjs cleanup
+```
+
+이 도구는 `127.0.0.1:4311`과 로컬 D1만 사용하며 리디렉션을 거절합니다. 가상 기업·공고 8건과 설명용 평가를 만들고, 생성한 ID를 무시된 `.wrangler` 파일에 기록합니다. 실제 공고 수집이나 AI 호출은 하지 않습니다. 설치·실행·배포에는 자동으로 포함되지 않습니다.
 
 ### 호스팅
 
