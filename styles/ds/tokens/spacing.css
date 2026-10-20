@@ -1,0 +1,36 @@
+/* ============================================================
+   Workspace — Spacing & layout tokens
+   4px base grid. Dense-but-not-cramped (B2B data UI).
+   ============================================================ */
+
+:root {
+  --space-0:  0;
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  8px;
+  --space-4:  12px;
+  --space-5:  16px;
+  --space-6:  20px;
+  --space-7:  24px;
+  --space-8:  32px;
+  --space-9:  40px;
+  --space-10: 48px;
+  --space-11: 64px;
+  --space-12: 80px;
+
+  /* control heights (interactive targets) */
+  --control-sm: 30px;
+  --control-md: 36px;
+  --control-lg: 44px;   /* min 44px hit target for primary actions */
+
+  /* layout chrome */
+  --sidenav-width: 248px;
+  --sidenav-collapsed: 64px;
+  --topbar-height: 60px;
+  --container-max: 1440px;
+
+  /* table density */
+  --row-height-compact: 40px;
+  --row-height-default: 48px;
+  --row-height-relaxed: 56px;
+}

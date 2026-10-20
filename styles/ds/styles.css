@@ -1,0 +1,15 @@
+/* ============================================================
+   Workspace Design System — global entry point.
+   Consumers link THIS one file. It is a list of @imports only.
+   ============================================================ */
+
+@import './tokens/fonts.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/radius.css';
+@import './tokens/base.css';
+
+/* Raw Figma Variables (full dump, all theme modes) kept for reference under
+   tokens/fig-tokens.css — not imported here to keep the consumer namespace
+   clean; the curated semantic tokens above are the supported surface. */

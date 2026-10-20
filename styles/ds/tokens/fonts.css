@@ -1,0 +1,7 @@
+/* Workspace webfonts — Inter (UI/data) + JetBrains Mono (IDs/spec values).
+   In the Next.js app the Google Fonts stylesheet is loaded via a <link> in
+   `app/layout.tsx` instead of an `@import url(...)` here: a bundled `@import`
+   gets hoisted after Tailwind's expanded rules and violates the CSS
+   "@import must precede all rules" constraint. Family names stay literal
+   ('Inter' / 'JetBrains Mono') so the typography tokens resolve unchanged.
+   (M6: swap to next/font for self-hosting + perf.) */
